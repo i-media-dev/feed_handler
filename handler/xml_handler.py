@@ -1,3 +1,6 @@
+import xml.etree.ElementTree as ET
+
+
 class XMLHandler():
 
     def indent(self, elem, level=0):
@@ -15,5 +18,7 @@ class XMLHandler():
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
 
-    def get_tree_element(self):
-        pass
+    def format_xml(self, xml_input):
+        root = xml_input
+        self.indent(root)
+        return ET.tostring(root, encoding='unicode')

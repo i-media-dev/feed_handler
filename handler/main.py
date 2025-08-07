@@ -5,8 +5,8 @@ from handler.constants import FEEDS_FOLDER
 
 
 def main():
-    save = XMLSaver(FEEDS, FEEDS_FOLDER)
-    save.save_xml()
+    saver = XMLSaver(FEEDS, FEEDS_FOLDER)
+    saver.save_xml()
 
 
 if __name__ == '__main__':

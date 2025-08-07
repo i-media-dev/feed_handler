@@ -5,6 +5,7 @@
 *.json
 *.csv#
 *.csv
+*.xml
 env/
 __pycache__/
 .env

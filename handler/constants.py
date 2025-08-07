@@ -1,0 +1,3 @@
+FEEDS_FOLDER = 'temp_feeds'
+
+ALLOWED_OFFER_ID_LIST = []

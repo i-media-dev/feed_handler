@@ -86,11 +86,15 @@ class XMLSaver():
             file_name = self._get_filename(feed)
             file_path = folder_path / file_name
             response = self._get_file(feed)
-            # encoding = response.text.split('>')[0].split('=')[-1].strip('?"\'')
-            # print(f'Кодировка XML: {encoding}')
-            # print(response.encoding)
+            encoding = response.text.split('>')[0].split('=')[-1].strip('?"\'')
+            logging.info(f'Кодировка XML-файла {file_name}: {encoding}')
+            logging.info(
+                'Автоматическое определение кодировки '
+                f'XML-фала {file_name}: {response.encoding}'
+            )
 
             if response is None:
+                logging.warning(f'XML-файл {file_name} не получен.')
                 continue
             self._validate_xml(response.text)
 

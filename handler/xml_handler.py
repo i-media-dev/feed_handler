@@ -4,22 +4,25 @@ from pathlib import Path
 
 class XMLHandler():
 
+    def __init__(self) -> None:
+        pass
+
     def _indent(self, elem, level=0) -> None:
-        i = "\n" + level*"  "
+        i = '\n' + level * '  '
         if len(elem):
             if not elem.text or not elem.text.strip():
-                elem.text = i + "  "
+                elem.text = i + '  '
             if not elem.tail or not elem.tail.strip():
                 elem.tail = i
             for child in elem:
-                self._indent(child, level+1)
+                self._indent(child, level + 1)
             if not elem.tail or not elem.tail.strip():
                 elem.tail = i
         else:
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
 
-    def format_xml(self, elem, file_path):
+    def format_xml(self, elem, file_path) -> None:
         root = elem
         self._indent(root)
         formatted_xml = ET.tostring(root, encoding='unicode')

@@ -1,7 +1,11 @@
+import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from collections import defaultdict
 from handler.decorators import time_of_function
+from handler.logging_config import setup_logging
+
+setup_logging()
 
 
 class XMLHandler():
@@ -21,6 +25,7 @@ class XMLHandler():
         file_path = (
             Path(__file__).parent.parent / self.feeds_folder / file_name
         )
+        logging.debug(f'Путь к файлу: {file_path}')
         return ET.parse(file_path)
 
     def _indent(self, elem, level=0) -> None:
@@ -53,6 +58,7 @@ class XMLHandler():
         flag='false'
     ) -> bool:
         file_path = Path(__file__).parent.parent / self.new_feeds_folder
+        logging.debug(f'Путь к файлу: {file_path}')
         file_path.mkdir(parents=True, exist_ok=True)
         try:
             for file_name in self._get_filenames_list(feeds_list):
@@ -74,8 +80,8 @@ class XMLHandler():
             print(f'Произошла ошибка: {e}')
             return False
 
-    def _collect_all_offers(self, file_names: str) -> tuple[dict, dict]:
-        offer_counts = defaultdict(int)
+    def _collect_all_offers(self, file_names: list[str]) -> tuple[dict, dict]:
+        offer_counts: dict = defaultdict(int)
         all_offers = {}
         for file_name in file_names:
             tree = self._get_tree(file_name)
@@ -89,7 +95,7 @@ class XMLHandler():
 
     @time_of_function
     def inner_join_feeds(self, feeds_list: list) -> bool:
-        file_names = self._get_filenames_list(feeds_list)
+        file_names: list[str] = self._get_filenames_list(feeds_list)
         offer_counts, all_offers = self._collect_all_offers(file_names)
         root = ET.Element('offers')
         for offer_id, count in offer_counts.items():
@@ -98,11 +104,12 @@ class XMLHandler():
         output_path = Path(__file__).parent.parent / \
             self.new_feeds_folder / 'inner_join_feed.xml'
         self.format_xml(root, output_path)
+        logging.debug(f'Файл создан по адресу: {output_path}')
         return True
 
     @time_of_function
     def full_outer_join_feeds(self, feeds_list: list) -> bool:
-        file_names = self._get_filenames_list(feeds_list)
+        file_names: list[str] = self._get_filenames_list(feeds_list)
         _, all_offers = self._collect_all_offers(file_names)
         root = ET.Element('offers')
         for offer in all_offers.values():
@@ -110,4 +117,5 @@ class XMLHandler():
         output_path = Path(__file__).parent.parent / \
             self.new_feeds_folder / 'full_outer_join_feed.xml'
         self.format_xml(root, output_path)
+        logging.debug(f'Файл создан по адресу: {output_path}')
         return True

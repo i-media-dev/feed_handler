@@ -78,7 +78,7 @@ class XMLSaver():
             raise ValueError(f'Ошибка при анализе XML: {str(e)}')
 
     def save_xml(self) -> None:
-        total_files = len(self.feeds_list)
+        total_files: int = len(self.feeds_list)
         saved_files = 0
         folder_path = Path(__file__).parent.parent / self.feeds_folder
         folder_path.mkdir(parents=True, exist_ok=True)

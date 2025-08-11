@@ -34,7 +34,7 @@ def setup_logging():
     )
 
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format=(
             '%(asctime)s, '
             '%(filename)s, '

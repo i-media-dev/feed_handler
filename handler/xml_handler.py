@@ -1,5 +1,7 @@
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from collections import defaultdict
+from handler.decorators import time_of_function
 
 
 class XMLHandler():
@@ -11,6 +13,9 @@ class XMLHandler():
     ) -> None:
         self.feeds_folder = feeds_folder
         self.new_feeds_folder = new_feeds_folder
+
+    def _get_filenames_list(self, feeds_list):
+        return [feed.split('/')[-1] for feed in feeds_list]
 
     def _get_tree(self, file_name: str):
         file_path = (
@@ -40,6 +45,7 @@ class XMLHandler():
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(formatted_xml)
 
+    @time_of_function
     def make_offers_unavailable(
         self,
         feeds_list,
@@ -49,8 +55,7 @@ class XMLHandler():
         file_path = Path(__file__).parent.parent / self.new_feeds_folder
         file_path.mkdir(parents=True, exist_ok=True)
         try:
-            file_name_list = [feed.split('/')[-1] for feed in feeds_list]
-            for file_name in file_name_list:
+            for file_name in self._get_filenames_list(feeds_list):
                 tree = self._get_tree(file_name)
                 root = tree.getroot()
                 for offer in root.findall('.//offer'):
@@ -68,3 +73,41 @@ class XMLHandler():
         except Exception as e:
             print(f'Произошла ошибка: {e}')
             return False
+
+    def _collect_all_offers(self, file_names: str) -> tuple[dict, dict]:
+        offer_counts = defaultdict(int)
+        all_offers = {}
+        for file_name in file_names:
+            tree = self._get_tree(file_name)
+            root = tree.getroot()
+            for offer in root.findall('.//offer'):
+                offer_id = offer.get('id')
+                if offer_id:
+                    offer_counts[offer_id] += 1
+                    all_offers[offer_id] = offer
+        return offer_counts, all_offers
+
+    @time_of_function
+    def inner_join_feeds(self, feeds_list: list) -> bool:
+        file_names = self._get_filenames_list(feeds_list)
+        offer_counts, all_offers = self._collect_all_offers(file_names)
+        root = ET.Element('offers')
+        for offer_id, count in offer_counts.items():
+            if count == len(file_names):
+                root.append(all_offers[offer_id])
+        output_path = Path(__file__).parent.parent / \
+            self.new_feeds_folder / 'inner_join_feed.xml'
+        self.format_xml(root, output_path)
+        return True
+
+    @time_of_function
+    def full_outer_join_feeds(self, feeds_list: list) -> bool:
+        file_names = self._get_filenames_list(feeds_list)
+        _, all_offers = self._collect_all_offers(file_names)
+        root = ET.Element('offers')
+        for offer in all_offers.values():
+            root.append(offer)
+        output_path = Path(__file__).parent.parent / \
+            self.new_feeds_folder / 'full_outer_join_feed.xml'
+        self.format_xml(root, output_path)
+        return True

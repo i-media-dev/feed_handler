@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 
 from handler.logging_config import setup_logging
 from handler.exceptions import EmptyXMLError, InvalidXMLError
+from handler.constants import FEEDS_FOLDER
 
 
 setup_logging()
@@ -18,7 +19,7 @@ class XMLSaver():
     def __init__(
         self,
         feeds_list: list[str],
-        feeds_folder: str = 'temp_feeds'
+        feeds_folder: str = FEEDS_FOLDER
     ) -> None:
         if not feeds_list:
             logging.error('Не передан список фидов.')

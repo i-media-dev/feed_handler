@@ -4,6 +4,8 @@ from pathlib import Path
 from collections import defaultdict
 from handler.decorators import time_of_function
 from handler.logging_config import setup_logging
+from handler.feeds import FEEDS
+from handler.constants import FEEDS_FOLDER, PARSE_FEEDS_FOLDER
 
 setup_logging()
 
@@ -12,8 +14,8 @@ class XMLHandler():
 
     def __init__(
         self,
-        feeds_folder: str = 'temp_feeds',
-        new_feeds_folder: str = 'new_feeds'
+        feeds_folder: str = FEEDS_FOLDER,
+        new_feeds_folder: str = PARSE_FEEDS_FOLDER
     ) -> None:
         self.feeds_folder = feeds_folder
         self.new_feeds_folder = new_feeds_folder
@@ -43,7 +45,7 @@ class XMLHandler():
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
 
-    def format_xml(self, elem, file_path) -> None:
+    def _format_xml(self, elem, file_path) -> None:
         root = elem
         self._indent(root)
         formatted_xml = ET.tostring(root, encoding='unicode')
@@ -80,6 +82,15 @@ class XMLHandler():
             print(f'Произошла ошибка: {e}')
             return False
 
+    def _super_feed(self, feeds_list: list[str] = FEEDS):
+        file_names: list[str] = self._get_filenames_list(feeds_list)
+        first_file_tree = self._get_tree(file_names[0])
+        root = first_file_tree.getroot()
+        offers = root.find('.//offers')
+        if offers is not None:
+            offers.clear()
+        return root, offers
+
     def _collect_all_offers(self, file_names: list[str]) -> tuple[dict, dict]:
         offer_counts: dict = defaultdict(int)
         all_offers = {}
@@ -97,13 +108,13 @@ class XMLHandler():
     def inner_join_feeds(self, feeds_list: list) -> bool:
         file_names: list[str] = self._get_filenames_list(feeds_list)
         offer_counts, all_offers = self._collect_all_offers(file_names)
-        root = ET.Element('offers')
+        root, offers = self._super_feed()
         for offer_id, count in offer_counts.items():
             if count == len(file_names):
-                root.append(all_offers[offer_id])
+                offers.append(all_offers[offer_id])
         output_path = Path(__file__).parent.parent / \
             self.new_feeds_folder / 'inner_join_feed.xml'
-        self.format_xml(root, output_path)
+        self._format_xml(root, output_path)
         logging.debug(f'Файл создан по адресу: {output_path}')
         return True
 
@@ -111,11 +122,11 @@ class XMLHandler():
     def full_outer_join_feeds(self, feeds_list: list) -> bool:
         file_names: list[str] = self._get_filenames_list(feeds_list)
         _, all_offers = self._collect_all_offers(file_names)
-        root = ET.Element('offers')
+        root, offers = self._super_feed()
         for offer in all_offers.values():
-            root.append(offer)
+            offers.append(offer)
         output_path = Path(__file__).parent.parent / \
             self.new_feeds_folder / 'full_outer_join_feed.xml'
-        self.format_xml(root, output_path)
+        self._format_xml(root, output_path)
         logging.debug(f'Файл создан по адресу: {output_path}')
         return True

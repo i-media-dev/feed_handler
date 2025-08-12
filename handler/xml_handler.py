@@ -52,36 +52,6 @@ class XMLHandler():
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(formatted_xml)
 
-    @time_of_function
-    def make_offers_unavailable(
-        self,
-        feeds_list,
-        offers_id_list,
-        flag='false'
-    ) -> bool:
-        file_path = Path(__file__).parent.parent / self.new_feeds_folder
-        logging.debug(f'Путь к файлу: {file_path}')
-        file_path.mkdir(parents=True, exist_ok=True)
-        try:
-            for file_name in self._get_filenames_list(feeds_list):
-                tree = self._get_tree(file_name)
-                root = tree.getroot()
-                for offer in root.findall('.//offer'):
-                    offer_id = offer.get('id')
-
-                    if offer_id and offer_id in offers_id_list:
-                        offer.set('available', flag)
-                tree.write(
-                    f'{file_path}/new_{file_name}',
-                    encoding='utf-8',
-                    xml_declaration=True
-                )
-            return True
-
-        except Exception as e:
-            print(f'Произошла ошибка: {e}')
-            return False
-
     def _super_feed(self, feeds_list: list[str] = FEEDS):
         file_names: list[str] = self._get_filenames_list(feeds_list)
         first_file_tree = self._get_tree(file_names[0])
@@ -130,3 +100,56 @@ class XMLHandler():
         self._format_xml(root, output_path)
         logging.debug(f'Файл создан по адресу: {output_path}')
         return True
+
+    @time_of_function
+    def process_feeds(
+        self,
+        feeds_list: list,
+        custom_label: dict[str, dict],
+        offers_id_list: list[str],
+        flag: str = 'false'
+    ) -> bool:
+        file_path = Path(__file__).parent.parent / self.new_feeds_folder
+        logging.debug(f'Путь к файлу: {file_path}')
+        file_path.mkdir(parents=True, exist_ok=True)
+        try:
+            for file_name in self._get_filenames_list(feeds_list):
+                tree = self._get_tree(file_name)
+                root = tree.getroot()
+                for offer in root.findall('.//offer'):
+                    offer_name_text = offer.findtext('name')
+                    offer_url_text = offer.findtext('url')
+                    offer_id = offer.get('id')
+                    if None in (
+                        offer_name_text,
+                        offer_url_text,
+                        offer_id
+                    ):
+                        continue
+                    if offer_id and offer_id in offers_id_list:
+                        offer.set('available', flag)
+                    existing_nums = set()
+                    for el in offer.findall('*'):
+                        if el.tag.startswith('custom_label_'):
+                            try:
+                                existing_nums.add(int(el.tag.split('_')[-1]))
+                            except ValueError:
+                                continue
+                    for label_name, conditions in custom_label.items():
+                        if offer_name_text in conditions.get('name', []) or \
+                            offer_url_text in conditions.get('url', []) or \
+                                offer_id in conditions.get('id', []):
+                            next_num = 0
+                            while next_num in existing_nums:
+                                next_num += 1
+                            existing_nums.add(next_num)
+                            ET.SubElement(
+                                offer, f'custom_label_{next_num}'
+                            ).text = label_name
+                output_path = file_path / f'new_{file_name}'
+                self._format_xml(root, output_path)
+                logging.debug(f'Файл записан по адресу: {output_path}')
+            return True
+        except Exception as e:
+            logging.error(f'Произошла ошибка: {e}')
+            return False

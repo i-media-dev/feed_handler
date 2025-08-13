@@ -137,9 +137,16 @@ class XMLHandler():
                             except ValueError:
                                 continue
                     for label_name, conditions in custom_label.items():
-                        if offer_name_text in conditions.get('name', []) or \
-                            offer_url_text in conditions.get('url', []) or \
-                                offer_id in conditions.get('id', []):
+                        name_match = any(
+                            sub.lower() in offer_name_text.lower()
+                            for sub in conditions.get('name', [])
+                        )
+                        url_match = any(
+                            sub.lower() in offer_url_text.lower()
+                            for sub in conditions.get('url', [])
+                        )
+                        id_match = offer_id in conditions.get('id', [])
+                        if name_match or url_match or id_match:
                             next_num = 0
                             while next_num in existing_nums:
                                 next_num += 1

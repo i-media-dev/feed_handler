@@ -23,6 +23,12 @@ class XMLHandler():
     def _get_filenames_list(self, feeds_list):
         return [feed.split('/')[-1] for feed in feeds_list]
 
+    def _make_dir(self):
+        file_path = Path(__file__).parent.parent / self.new_feeds_folder
+        logging.debug(f'Путь к файлу: {file_path}')
+        file_path.mkdir(parents=True, exist_ok=True)
+        return file_path
+
     def _get_tree(self, file_name: str):
         file_path = (
             Path(__file__).parent.parent / self.feeds_folder / file_name
@@ -82,8 +88,7 @@ class XMLHandler():
         for offer_id, count in offer_counts.items():
             if count == len(file_names):
                 offers.append(all_offers[offer_id])
-        output_path = Path(__file__).parent.parent / \
-            self.new_feeds_folder / 'inner_join_feed.xml'
+        output_path = self._make_dir() / 'inner_join_feed.xml'
         self._format_xml(root, output_path)
         logging.debug(f'Файл создан по адресу: {output_path}')
         return True
@@ -95,8 +100,7 @@ class XMLHandler():
         root, offers = self._super_feed()
         for offer in all_offers.values():
             offers.append(offer)
-        output_path = Path(__file__).parent.parent / \
-            self.new_feeds_folder / 'full_outer_join_feed.xml'
+        output_path = self._make_dir() / 'full_outer_join_feed.xml'
         self._format_xml(root, output_path)
         logging.debug(f'Файл создан по адресу: {output_path}')
         return True
@@ -109,9 +113,6 @@ class XMLHandler():
         offers_id_list: list[str],
         flag: str = 'false'
     ) -> bool:
-        file_path = Path(__file__).parent.parent / self.new_feeds_folder
-        logging.debug(f'Путь к файлу: {file_path}')
-        file_path.mkdir(parents=True, exist_ok=True)
         try:
             for file_name in self._get_filenames_list(feeds_list):
                 tree = self._get_tree(file_name)
@@ -126,7 +127,7 @@ class XMLHandler():
                         offer_id
                     ):
                         continue
-                    if offer_id and offer_id in offers_id_list:
+                    if offer_id in offers_id_list:
                         offer.set('available', flag)
                     existing_nums = set()
                     for el in offer.findall('*'):
@@ -146,7 +147,7 @@ class XMLHandler():
                             ET.SubElement(
                                 offer, f'custom_label_{next_num}'
                             ).text = label_name
-                output_path = file_path / f'new_{file_name}'
+                output_path = self._make_dir() / f'new_{file_name}'
                 self._format_xml(root, output_path)
                 logging.debug(f'Файл записан по адресу: {output_path}')
             return True

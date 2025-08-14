@@ -13,7 +13,7 @@ from handler.constants import FEEDS_FOLDER
 setup_logging()
 
 
-class XMLSaver():
+class XMLSaver:
     load_dotenv()
 
     def __init__(

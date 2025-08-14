@@ -10,7 +10,7 @@ from handler.constants import FEEDS_FOLDER, PARSE_FEEDS_FOLDER
 setup_logging()
 
 
-class XMLHandler():
+class XMLHandler:
 
     def __init__(
         self,

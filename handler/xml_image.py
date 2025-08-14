@@ -1,5 +1,5 @@
 from PIL import Image
 
 
-class XMLImage():
+class XMLImage:
     pass

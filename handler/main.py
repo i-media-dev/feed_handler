@@ -14,16 +14,18 @@ from handler.decorators import time_of_function
 
 @time_of_function
 def main():
-    saver = XMLSaver(FEEDS)
+    # saver = XMLSaver(FEEDS)
     handler = XMLHandler()
-    saver.save_xml()
-    handler.process_feeds(
-        FEEDS,
-        CUSTOM_LABEL,
-        UNAVAILABLE_OFFER_ID_LIST
-    )
-    handler.full_outer_join_feeds(FEEDS)
-    handler.inner_join_feeds(FEEDS)
+    # saver.save_xml()
+    # handler.process_feeds(
+    #     FEEDS,
+    #     CUSTOM_LABEL,
+    #     UNAVAILABLE_OFFER_ID_LIST
+    # )
+    data = handler.get_offers_report()
+    handler.save_to_json(data)
+    # handler.full_outer_join_feeds(FEEDS)
+    # handler.inner_join_feeds(FEEDS)
 
 
 if __name__ == '__main__':

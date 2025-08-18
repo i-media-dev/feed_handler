@@ -1,11 +1,19 @@
 import logging
+import numpy as np
 import xml.etree.ElementTree as ET
+from datetime import datetime as dt, timedelta
 from pathlib import Path
 from collections import defaultdict
 from handler.decorators import time_of_function
 from handler.logging_config import setup_logging
 from handler.feeds import FEEDS
-from handler.constants import FEEDS_FOLDER, PARSE_FEEDS_FOLDER
+from handler.constants import (
+    DECIMAL_ROUNDING,
+    FEEDS_FOLDER,
+    PARSE_FEEDS_FOLDER
+)
+import json
+import os
 
 setup_logging()
 
@@ -15,10 +23,12 @@ class XMLHandler:
     def __init__(
         self,
         feeds_folder: str = FEEDS_FOLDER,
-        new_feeds_folder: str = PARSE_FEEDS_FOLDER
+        new_feeds_folder: str = PARSE_FEEDS_FOLDER,
+        feeds_list: list[str] = FEEDS
     ) -> None:
         self.feeds_folder = feeds_folder
         self.new_feeds_folder = new_feeds_folder
+        self.feeds_list = feeds_list
 
     def _get_filenames_list(self, feeds_list):
         return [feed.split('/')[-1] for feed in feeds_list]
@@ -161,3 +171,58 @@ class XMLHandler:
         except Exception as e:
             logging.error(f'Произошла ошибка: {e}')
             return False
+
+    def get_offers_report(self, feeds_list=FEEDS):
+        result = {}
+        date_str = (dt.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+
+        for file_name in self._get_filenames_list(feeds_list):
+            categories_data = {}
+            tree = self._get_tree(file_name)
+            root = tree.getroot()
+
+            for category in root.findall('.//category'):
+                price_list = []
+                offers_list = []
+                category_id = category.get('id')
+
+                for offer in root.findall(
+                    f".//offer[categoryId='{category_id}']"
+                ):
+                    price = offer.findtext('price')
+                    price_list.append(int(price))
+                    offers_list.append(offer)
+
+                categories_data[category_id] = {
+                    'date': date_str,
+                    'feed_name': file_name,
+                    'category_id': category_id,
+                    'count_offers': len(offers_list),
+                    'min_price': min(price_list) if price_list else 0,
+                    'max_price': max(price_list) if price_list else 0,
+                    'avg_price': round(
+                        sum(price_list) / len(price_list), DECIMAL_ROUNDING
+                    ) if price_list else 0,
+                    'median_price': round(
+                        np.median(price_list), DECIMAL_ROUNDING
+                    ) if price_list else 0
+                }
+
+            result[file_name] = categories_data
+        return result
+
+    def save_to_json(
+        self,
+        data: list,
+        prefix: str = 'offers_report',
+        folder: str = 'data'
+    ) -> None:
+        """Отладочный метод сохраняет данные в файл формата json."""
+        logging.debug('Сохранение файла...')
+        os.makedirs(folder, exist_ok=True)
+        date_str = (dt.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        filename = os.path.join(folder, f'{prefix}_{date_str}.json')
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        logging.info(f'✅ Данные сохранены в {filename}')
+        logging.debug('Файл сохранен.')

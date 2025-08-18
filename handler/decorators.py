@@ -1,6 +1,8 @@
 import logging
 import time
 
+import mysql.connector
+from handler.db_config import config
 from handler.logging_config import setup_logging
 
 setup_logging()
@@ -32,4 +34,38 @@ def time_of_function(func):
             f'или {round(execution_time / 60, 2)} мин.'
         )
         return result
+    return wrapper
+
+
+def connection_db(func):
+    """
+    Декоратор для подключения к базе данных.
+
+    Подключается к базе данных, обрабатывает ошибки в процессе подключения,
+    логирует все успешные/неуспешные действия, вызывает функцию, выполняющую
+    действия в базе данных и закрывает подключение.
+
+    Args:
+        func (callable): Декорируемая функция, которая выполняет
+        действия с базой данных.
+
+    Returns:
+        callable: Обёрнутая функция с добавленной функциональностью
+        подключения к базе данных и логирования.
+    """
+    def wrapper(*args, **kwargs):
+        connection = mysql.connector.connect(**config)
+        cursor = connection.cursor()
+        try:
+            kwargs['cursor'] = cursor
+            result = func(*args, **kwargs)
+            connection.commit()
+            return result
+        except Exception as e:
+            connection.rollback()
+            logging.error(f'Ошибка в {func.__name__}: {str(e)}', exc_info=True)
+            raise
+        finally:
+            cursor.close()
+            connection.close()
     return wrapper

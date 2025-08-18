@@ -4,3 +4,7 @@ class EmptyXMLError(ValueError):
 
 class InvalidXMLError(ValueError):
     pass
+
+
+class TableNameError(ValueError):
+    pass

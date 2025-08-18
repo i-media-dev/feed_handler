@@ -172,12 +172,11 @@ class XMLHandler:
             logging.error(f'Произошла ошибка: {e}')
             return False
 
-    def get_offers_report(self, feeds_list=FEEDS):
-        result = {}
+    def get_offers_report(self, feeds_list: list[str] = FEEDS) -> list[dict]:
+        result = []
         date_str = (dt.now() - timedelta(days=1)).strftime('%Y-%m-%d')
 
         for file_name in self._get_filenames_list(feeds_list):
-            categories_data = {}
             tree = self._get_tree(file_name)
             root = tree.getroot()
 
@@ -193,7 +192,7 @@ class XMLHandler:
                     price_list.append(int(price))
                     offers_list.append(offer)
 
-                categories_data[category_id] = {
+                result.append({
                     'date': date_str,
                     'feed_name': file_name,
                     'category_id': category_id,
@@ -206,9 +205,7 @@ class XMLHandler:
                     'median_price': round(
                         np.median(price_list), DECIMAL_ROUNDING
                     ) if price_list else 0
-                }
-
-            result[file_name] = categories_data
+                })
         return result
 
     def save_to_json(

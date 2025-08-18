@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 # from pathlib import Path
+from handler.xml_database import XMLDataBase
 from handler.xml_saver import XMLSaver
 from handler.xml_handler import XMLHandler
 from handler.feeds import FEEDS
@@ -14,8 +15,9 @@ from handler.decorators import time_of_function
 
 @time_of_function
 def main():
-    # saver = XMLSaver(FEEDS)
+    saver = XMLSaver(FEEDS)
     handler = XMLHandler()
+    db_client = XMLDataBase()
     # saver.save_xml()
     # handler.process_feeds(
     #     FEEDS,
@@ -26,6 +28,7 @@ def main():
     handler.save_to_json(data)
     # handler.full_outer_join_feeds(FEEDS)
     # handler.inner_join_feeds(FEEDS)
+    db_client.insert_data(data)
 
 
 if __name__ == '__main__':

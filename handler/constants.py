@@ -1,3 +1,6 @@
+"""Константа названия магазина."""
+NAME_OF_SHOP = 'citilink'
+
 """Константы стоковых названий директорий."""
 FEEDS_FOLDER = 'temp_feeds'
 PARSE_FEEDS_FOLDER = 'new_feeds'

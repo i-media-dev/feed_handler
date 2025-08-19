@@ -5,6 +5,9 @@ NAME_OF_SHOP = 'citilink'
 FEEDS_FOLDER = 'temp_feeds'
 PARSE_FEEDS_FOLDER = 'new_feeds'
 
+IMAGE_FOLDER = 'old_images'
+NEW_IMAGE_FOLDER = 'new_images'
+
 """Округление до указанного количества знаков после точки."""
 DECIMAL_ROUNDING = 2
 
@@ -31,6 +34,7 @@ CREATE TABLE IF NOT EXISTS {table_name} (
     `date` DATE NOT NULL,
     `feed_name` VARCHAR(255) NOT NULL,
     `category_id` BIGINT UNSIGNED NOT NULL,
+    `parent_id` BIGINT UNSIGNED NULL,
     `count_offers` INT UNSIGNED NOT NULL,
     `min_price` BIGINT UNSIGNED NOT NULL,
     `max_price` BIGINT UNSIGNED NOT NULL,
@@ -39,7 +43,7 @@ CREATE TABLE IF NOT EXISTS {table_name} (
 PRIMARY KEY (`id`),
 UNIQUE KEY `unique_{table_name}_combo` (
     `date`, `feed_name`, `category_id`
-    ),
+),
 KEY `idx_date` (`date`),
 KEY `idx_category` (`category_id`)
 );
@@ -51,13 +55,14 @@ INSERT INTO {table_name} (
     date,
     feed_name,
     category_id,
+    parent_id,
     count_offers,
     min_price,
     max_price,
     avg_price,
     median_price
-    )
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
 ON DUPLICATE KEY UPDATE
     count_offers = VALUES(count_offers),
     min_price = VALUES(min_price),

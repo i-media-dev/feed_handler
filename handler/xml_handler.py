@@ -34,9 +34,9 @@ class XMLHandler:
         self.new_feeds_folder = new_feeds_folder
         self.feeds_list = feeds_list
 
-    def _get_filenames_list(self, feeds_list):
+    def _get_filenames_list(self):
         """Защищенный метод, возвращает список названий фидов."""
-        return [feed.split('/')[-1] for feed in feeds_list]
+        return [feed.split('/')[-1] for feed in self.feeds_list]
 
     def _make_dir(self):
         """Защищенный метод, создает директорию."""
@@ -77,9 +77,9 @@ class XMLHandler:
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(formatted_xml)
 
-    def _super_feed(self, feeds_list: list[str] = FEEDS):
+    def _super_feed(self):
         """Защищенный метод, создает шаблон фида с пустыми offers."""
-        file_names: list[str] = self._get_filenames_list(feeds_list)
+        file_names: list[str] = self._get_filenames_list()
         first_file_tree = self._get_tree(file_names[0])
         root = first_file_tree.getroot()
         offers = root.find('.//offers')
@@ -104,12 +104,12 @@ class XMLHandler:
         return offer_counts, all_offers
 
     @time_of_function
-    def inner_join_feeds(self, feeds_list: list) -> bool:
+    def inner_join_feeds(self) -> bool:
         """
         Метод, объединяющий все офферы в один фид
         по принципу inner join.
         """
-        file_names: list[str] = self._get_filenames_list(feeds_list)
+        file_names: list[str] = self._get_filenames_list()
         offer_counts, all_offers = self._collect_all_offers(file_names)
         root, offers = self._super_feed()
         for offer_id, count in offer_counts.items():
@@ -121,12 +121,12 @@ class XMLHandler:
         return True
 
     @time_of_function
-    def full_outer_join_feeds(self, feeds_list: list) -> bool:
+    def full_outer_join_feeds(self) -> bool:
         """
         Метод, объединяющий все офферы в один фид
         по принципу full outer join.
         """
-        file_names: list[str] = self._get_filenames_list(feeds_list)
+        file_names: list[str] = self._get_filenames_list()
         _, all_offers = self._collect_all_offers(file_names)
         root, offers = self._super_feed()
         for offer in all_offers.values():
@@ -139,7 +139,6 @@ class XMLHandler:
     @time_of_function
     def process_feeds(
         self,
-        feeds_list: list,
         custom_label: dict[str, dict],
         offers_id_list: list[str],
         flag: str = 'false'
@@ -149,7 +148,7 @@ class XMLHandler:
         из настраиваемого словаря CUSTOM_LABEL.
         """
         try:
-            for file_name in self._get_filenames_list(feeds_list):
+            for file_name in self._get_filenames_list():
                 tree = self._get_tree(file_name)
                 root = tree.getroot()
                 for offer in root.findall('.//offer'):
@@ -197,12 +196,12 @@ class XMLHandler:
             logging.error(f'Произошла ошибка: {e}')
             return False
 
-    def get_offers_report(self, feeds_list: list[str] = FEEDS) -> list[dict]:
+    def get_offers_report(self) -> list[dict]:
         """Метод, формирующий отчет по офферам."""
         result = []
         date_str = (dt.now() - timedelta(days=1)).strftime('%Y-%m-%d')
 
-        for file_name in self._get_filenames_list(feeds_list):
+        for file_name in self._get_filenames_list():
             tree = self._get_tree(file_name)
             root = tree.getroot()
 
@@ -210,6 +209,7 @@ class XMLHandler:
                 price_list = []
                 offers_list = []
                 category_id = category.get('id')
+                parent_id = category.get('parentId')
 
                 for offer in root.findall(
                     f".//offer[categoryId='{category_id}']"
@@ -222,6 +222,7 @@ class XMLHandler:
                     'date': date_str,
                     'feed_name': file_name,
                     'category_id': category_id,
+                    'parent_id': parent_id,
                     'count_offers': len(offers_list),
                     'min_price': min(price_list) if price_list else 0,
                     'max_price': max(price_list) if price_list else 0,

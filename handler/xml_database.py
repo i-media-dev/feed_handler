@@ -40,7 +40,7 @@ class XMLDataBase:
 
     @connection_db
     def insert_data(self, data, cursor=None) -> None:
-        """Метод наполняет данными таблицу базу данных."""
+        """Метод наполняет данными таблицу базы данных."""
         table_name = self._create_table_if_not_exists()
         query = INSERT_LOGS.format(table_name=table_name)
         params = [
@@ -48,6 +48,7 @@ class XMLDataBase:
                 item['date'],
                 item['feed_name'],
                 item['category_id'],
+                item['parent_id'],
                 item['count_offers'],
                 item['min_price'],
                 item['max_price'],

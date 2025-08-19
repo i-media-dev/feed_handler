@@ -19,6 +19,10 @@ setup_logging()
 
 
 class XMLHandler:
+    """
+    Класс, предоставляющий интерфейс
+    для обработки xml-файлов.
+    """
 
     def __init__(
         self,
@@ -31,15 +35,18 @@ class XMLHandler:
         self.feeds_list = feeds_list
 
     def _get_filenames_list(self, feeds_list):
+        """Защищенный метод, возвращает список названий фидов."""
         return [feed.split('/')[-1] for feed in feeds_list]
 
     def _make_dir(self):
+        """Защищенный метод, создает директорию."""
         file_path = Path(__file__).parent.parent / self.new_feeds_folder
         logging.debug(f'Путь к файлу: {file_path}')
         file_path.mkdir(parents=True, exist_ok=True)
         return file_path
 
     def _get_tree(self, file_name: str):
+        """Защищенный метод, создает экземпляра класса ElementTree."""
         file_path = (
             Path(__file__).parent.parent / self.feeds_folder / file_name
         )
@@ -47,6 +54,7 @@ class XMLHandler:
         return ET.parse(file_path)
 
     def _indent(self, elem, level=0) -> None:
+        """Защищенный метод, расставляет правильные отступы в XML файлах."""
         i = '\n' + level * '  '
         if len(elem):
             if not elem.text or not elem.text.strip():
@@ -62,6 +70,7 @@ class XMLHandler:
                 elem.tail = i
 
     def _format_xml(self, elem, file_path) -> None:
+        """Защищенный метод, сохраняет отформатированные файлы."""
         root = elem
         self._indent(root)
         formatted_xml = ET.tostring(root, encoding='unicode')
@@ -69,6 +78,7 @@ class XMLHandler:
             f.write(formatted_xml)
 
     def _super_feed(self, feeds_list: list[str] = FEEDS):
+        """Защищенный метод, создает шаблон фида с пустыми offers."""
         file_names: list[str] = self._get_filenames_list(feeds_list)
         first_file_tree = self._get_tree(file_names[0])
         root = first_file_tree.getroot()
@@ -78,6 +88,9 @@ class XMLHandler:
         return root, offers
 
     def _collect_all_offers(self, file_names: list[str]) -> tuple[dict, dict]:
+        """
+        Защищенный метод, подсчитывает встречался ли оффер в том или ином фиде.
+        """
         offer_counts: dict = defaultdict(int)
         all_offers = {}
         for file_name in file_names:
@@ -92,6 +105,10 @@ class XMLHandler:
 
     @time_of_function
     def inner_join_feeds(self, feeds_list: list) -> bool:
+        """
+        Метод, объединяющий все офферы в один фид
+        по принципу inner join.
+        """
         file_names: list[str] = self._get_filenames_list(feeds_list)
         offer_counts, all_offers = self._collect_all_offers(file_names)
         root, offers = self._super_feed()
@@ -105,6 +122,10 @@ class XMLHandler:
 
     @time_of_function
     def full_outer_join_feeds(self, feeds_list: list) -> bool:
+        """
+        Метод, объединяющий все офферы в один фид
+        по принципу full outer join.
+        """
         file_names: list[str] = self._get_filenames_list(feeds_list)
         _, all_offers = self._collect_all_offers(file_names)
         root, offers = self._super_feed()
@@ -123,6 +144,10 @@ class XMLHandler:
         offers_id_list: list[str],
         flag: str = 'false'
     ) -> bool:
+        """
+        Метод, подставляющий в фиды данные
+        из настраиваемого словаря CUSTOM_LABEL.
+        """
         try:
             for file_name in self._get_filenames_list(feeds_list):
                 tree = self._get_tree(file_name)
@@ -173,6 +198,7 @@ class XMLHandler:
             return False
 
     def get_offers_report(self, feeds_list: list[str] = FEEDS) -> list[dict]:
+        """Метод, формирующий отчет по офферам."""
         result = []
         date_str = (dt.now() - timedelta(days=1)).strftime('%Y-%m-%d')
 

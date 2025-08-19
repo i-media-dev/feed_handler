@@ -9,13 +9,15 @@ setup_logging()
 
 
 class XMLDataBase:
+    """Класс, предоставляющий интерфейс для работы с базой данных"""
+
     def __init__(self, shop_name: str = NAME_OF_SHOP):
         self.shop_name = shop_name
 
     @connection_db
     def _allowed_tables(self, cursor=None) -> list:
         """
-        Защищенный метод возвращает список существующих
+        Защищенный метод, возвращает список существующих
         таблиц в базе данных.
         """
         cursor.execute('SHOW TABLES')
@@ -23,6 +25,10 @@ class XMLDataBase:
 
     @connection_db
     def _create_table_if_not_exists(self, cursor=None) -> str:
+        """
+        Защищенный метод, создает таблицу в базе данных, если ее не существует.
+        Если таблица есть в базе данных - возварщает ее имя.
+        """
         table_name = f'report_offers_{self.shop_name}'
         if table_name in self._allowed_tables():
             logging.info(f'Таблица {table_name} найдена в базе')
@@ -34,6 +40,7 @@ class XMLDataBase:
 
     @connection_db
     def insert_data(self, data, cursor=None) -> None:
+        """Метод наполняет данными таблицу базу данных."""
         table_name = self._create_table_if_not_exists()
         query = INSERT_LOGS.format(table_name=table_name)
         params = [
@@ -57,10 +64,8 @@ class XMLDataBase:
     @connection_db
     def clean_db(self, cursor=None, **tables: bool) -> None:
         """
-        Метод очищает базу данных. В tables передаются имеющиеся в базе данных
-        таблицы, которые нужно удалить, учитывая связь таблиц по PK и FK
-        (таблицы reports_sales и reports_stocks удаляются автоматически
-        если удалить catalog_products).
+        Метод очищает базу данных,
+        не удаляя сами таблицы
         """
         try:
             existing_tables = self._allowed_tables()

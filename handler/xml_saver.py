@@ -14,6 +14,10 @@ setup_logging()
 
 
 class XMLSaver:
+    """
+    Класс, предоставляющий интерфейс для скачивания,
+    валидации и сохранения фида в xml-файл.
+    """
     load_dotenv()
 
     def __init__(
@@ -29,6 +33,7 @@ class XMLSaver:
         self.feeds_folder = feeds_folder
 
     def _get_file(self, feed: str):
+        """Защищенный метод, получает фид по ссылке."""
         try:
             response = requests.get(feed)
 
@@ -54,9 +59,14 @@ class XMLSaver:
             return None
 
     def _get_filename(self, feed: str) -> str:
+        """Защищенный метод, формирующий имя xml-файлу."""
         return feed.split('/')[-1]
 
     def _chek_syntax(self, str_feed):
+        """
+        Защищенный валидирующий метод,
+        проверяющий синтаксис полученного фида.
+        """
         try:
             ET.fromstring(str_feed)
             return True
@@ -64,9 +74,14 @@ class XMLSaver:
             return False
 
     def _chek_empty(self, str_feed):
+        """
+        Защищенный валидирующий метод,
+        проверяющий наполненность фида.
+        """
         return not bool(str_feed.strip())
 
     def _validate_xml(self, str_feed):
+        """Суммирующий валидирующий защищенный метод."""
         if self._chek_empty(str_feed):
             raise EmptyXMLError('XML пуст')
         if not self._chek_syntax(str_feed):
@@ -79,6 +94,7 @@ class XMLSaver:
             raise ValueError(f'Ошибка при анализе XML: {str(e)}')
 
     def save_xml(self) -> None:
+        """Метод, сохраняющий фиды в xml-файлы в директорию temp_feeds."""
         total_files: int = len(self.feeds_list)
         saved_files = 0
         folder_path = Path(__file__).parent.parent / self.feeds_folder

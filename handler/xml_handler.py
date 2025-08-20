@@ -1,19 +1,20 @@
+import json
 import logging
-import numpy as np
+import os
 import xml.etree.ElementTree as ET
 from datetime import datetime as dt, timedelta
 from pathlib import Path
 from collections import defaultdict
-from handler.decorators import time_of_function
-from handler.logging_config import setup_logging
-from handler.feeds import FEEDS
+from statistics import median
 from handler.constants import (
     DECIMAL_ROUNDING,
     FEEDS_FOLDER,
     PARSE_FEEDS_FOLDER
 )
-import json
-import os
+from handler.decorators import time_of_function
+from handler.feeds import FEEDS
+from handler.logging_config import setup_logging
+from handler.utils import clear_max, clear_min
 
 setup_logging()
 
@@ -204,33 +205,70 @@ class XMLHandler:
         for file_name in self._get_filenames_list():
             tree = self._get_tree(file_name)
             root = tree.getroot()
+            category_data = {}
+            all_categories = {}
 
             for category in root.findall('.//category'):
-                price_list = []
-                offers_list = []
                 category_id = category.get('id')
                 parent_id = category.get('parentId')
+                all_categories[category_id] = parent_id
+                category_data[category_id] = {
+                    'prices': [],
+                    'offers_count': 0
+                }
 
-                for offer in root.findall(
-                    f".//offer[categoryId='{category_id}']"
-                ):
-                    price = offer.findtext('price')
-                    price_list.append(int(price))
-                    offers_list.append(offer)
+            for offer in root.findall('.//offer'):
+                category_id = offer.findtext('categoryId')
+                price = offer.findtext('price')
+                if category_id and price:
+                    if category_id not in category_data:
+                        category_data[category_id] = {
+                            'prices': [], 'offers_count': 0}
+                    category_data[category_id]['prices'].append(int(price))
+                    category_data[category_id]['offers_count'] += 1
+
+            def aggregate_data(category_id):
+                prices = category_data[category_id]['prices'].copy()
+                offers_count = category_data[category_id]['offers_count']
+
+                for child_id, parent_id in all_categories.items():
+                    if parent_id == category_id:
+                        child_prices, child_count = aggregate_data(child_id)
+                        prices.extend(child_prices)
+                        offers_count += child_count
+                category_data[category_id]['prices'] = prices
+                category_data[category_id]['offers_count'] = offers_count
+                return prices, offers_count
+
+            root_categories = [
+                cat_id for cat_id, parent_id in all_categories.items()
+                if parent_id is None
+            ]
+            for root_id in root_categories:
+                aggregate_data(root_id)
+
+            for category_id, data in category_data.items():
+                count_offers = data['offers_count']
+                price_list = data['prices']
+                parent_id = all_categories.get(category_id)
 
                 result.append({
                     'date': date_str,
                     'feed_name': file_name,
                     'category_id': category_id,
                     'parent_id': parent_id,
-                    'count_offers': len(offers_list),
+                    'count_offers': count_offers,
                     'min_price': min(price_list) if price_list else 0,
+                    'clear_min_price': clear_min(price_list)
+                    if price_list else 0,
                     'max_price': max(price_list) if price_list else 0,
+                    'clear_max_price': clear_max(price_list)
+                    if price_list else 0,
                     'avg_price': round(
                         sum(price_list) / len(price_list), DECIMAL_ROUNDING
                     ) if price_list else 0,
                     'median_price': round(
-                        np.median(price_list), DECIMAL_ROUNDING
+                        median(price_list), DECIMAL_ROUNDING
                     ) if price_list else 0
                 })
         return result

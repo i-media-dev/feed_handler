@@ -8,6 +8,10 @@ PARSE_FEEDS_FOLDER = 'new_feeds'
 IMAGE_FOLDER = 'old_images'
 NEW_IMAGE_FOLDER = 'new_images'
 
+"""Константы для среза массива (без выбросов)."""
+UPPER_OUTLIER_PERCENTILE = 0.75
+LOWER_OUTLIER_PERCENTILE = 0.25
+
 """Округление до указанного количества знаков после точки."""
 DECIMAL_ROUNDING = 2
 
@@ -37,7 +41,9 @@ CREATE TABLE IF NOT EXISTS {table_name} (
     `parent_id` BIGINT UNSIGNED NULL,
     `count_offers` INT UNSIGNED NOT NULL,
     `min_price` BIGINT UNSIGNED NOT NULL,
+    `clear_min_price` BIGINT UNSIGNED NOT NULL,
     `max_price` BIGINT UNSIGNED NOT NULL,
+    `clear_max_price` BIGINT UNSIGNED NOT NULL,
     `avg_price` DECIMAL(20,2) UNSIGNED NOT NULL,
     `median_price` DECIMAL(20,2) UNSIGNED NOT NULL,
 PRIMARY KEY (`id`),
@@ -58,15 +64,19 @@ INSERT INTO {table_name} (
     parent_id,
     count_offers,
     min_price,
+    clear_min_price,
     max_price,
+    clear_max_price,
     avg_price,
     median_price
 )
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
 ON DUPLICATE KEY UPDATE
     count_offers = VALUES(count_offers),
     min_price = VALUES(min_price),
+    clear_min_price = VALUES(clear_min_price),
     max_price = VALUES(max_price),
+    clear_max_price = VALUES(clear_max_price),
     avg_price = VALUES(avg_price),
     median_price = VALUES(median_price)
 '''

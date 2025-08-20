@@ -29,7 +29,7 @@ class XMLDataBase:
         Защищенный метод, создает таблицу в базе данных, если ее не существует.
         Если таблица есть в базе данных - возварщает ее имя.
         """
-        table_name = f'report_offers_{self.shop_name}'
+        table_name = f'test_report_offers_{self.shop_name}'
         if table_name in self._allowed_tables():
             logging.info(f'Таблица {table_name} найдена в базе')
             return table_name
@@ -51,7 +51,9 @@ class XMLDataBase:
                 item['parent_id'],
                 item['count_offers'],
                 item['min_price'],
+                item['clear_min_price'],
                 item['max_price'],
+                item['clear_max_price'],
                 item['avg_price'],
                 item['median_price']
             ) for item in data
